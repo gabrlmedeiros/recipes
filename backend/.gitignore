@@ -1,0 +1,4 @@
+node_modules
+.env
+COPILOT.md
+/src/generated/prisma
