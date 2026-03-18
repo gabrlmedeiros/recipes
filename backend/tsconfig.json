@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "rootDir": "./src",
     "outDir": "./dist",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
@@ -13,6 +12,6 @@
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true
   },
-  "include": ["src"],
+  "include": ["src", "tests", "vitest.config.ts"],
   "exclude": ["node_modules", "prisma"]
 }
