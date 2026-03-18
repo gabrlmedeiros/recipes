@@ -10,7 +10,7 @@
       "@/*": ["./*"]
     },
 
-    "types": ["react", "react-native"]
+    "types": ["react", "react-native", "node"]
   },
   "include": ["**/*.ts", "**/*.tsx"]
 }
