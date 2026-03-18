@@ -37,6 +37,9 @@ services:
       DATABASE_URL: mysql://root:root@db:3306/app
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
       NODE_ENV: production
+      JWT_SECRET: change_this_in_production
+      JWT_EXPIRES_IN: 7d
+      CORS_ORIGIN: "*"
     depends_on:
       db:
         condition: service_healthy

@@ -1,53 +1,39 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-import { Platform } from 'react-native';
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+export const DarkColors = {
+  bgPage: '#0a0a0a',
+  bgSurface: '#0f0f0f',
+  bgElevated: '#1a1a1a',
+  bgInput: '#111111',
+  textPrimary: '#fafafa',
+  textSecondary: '#6b7280',
+  textTertiary: '#4b5563',
+  borderPrimary: '#2a2a2a',
+  borderSecondary: '#252525',
+  primary: '#ff8400',
+  primaryForeground: '#111111',
+  destructive: '#ff5c33',
+  accentGreen: '#10b981',
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+export const LightColors = {
+  bgPage: '#f8f8f8',
+  bgSurface: '#ffffff',
+  bgElevated: '#f0f0f0',
+  bgInput: '#f5f5f5',
+  textPrimary: '#0a0a0a',
+  textSecondary: '#374151',
+  textTertiary: '#9ca3af',
+  borderPrimary: '#e5e5e5',
+  borderSecondary: '#ececec',
+  primary: '#ff8400',
+  primaryForeground: '#111111',
+  destructive: '#ff5c33',
+  accentGreen: '#10b981',
+};
+
+export const Colors = DarkColors;
+
+export const Fonts = {
+  regular: 'JetBrainsMono_400Regular',
+  semiBold: 'JetBrainsMono_600SemiBold',
+  bold: 'JetBrainsMono_700Bold',
+};

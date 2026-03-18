@@ -1,19 +1,76 @@
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import { useFonts, JetBrainsMono_400Regular, JetBrainsMono_600SemiBold, JetBrainsMono_700Bold } from '@expo-google-fonts/jetbrains-mono';
+import * as SplashScreen from 'expo-splash-screen';
+import { storage } from '../src/shared/storage/storage';
+import { ThemeContextProvider, useTheme } from '../hooks/use-theme';
 
+SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+function AuthGuard() {
+  const router = useRouter();
+  const segments = useSegments();
+
+  useEffect(() => {
+    storage.getToken().then((token) => {
+      const inAuthGroup = segments[0] === 'login' || segments[0] === 'register';
+      if (!token && !inAuthGroup) {
+        router.replace('/login');
+      }
+    });
+  }, [router, segments]);
+
+  return null;
+}
+
+function AppWithTheme() {
+  const { isDark, colors } = useTheme();
+
+  const NavigationTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme : DefaultTheme).colors,
+      background: colors.bgPage,
+      card: colors.bgSurface,
+      text: colors.textPrimary,
+      border: colors.borderPrimary,
+      primary: colors.primary,
+      notification: colors.primary,
+    },
+  };
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={NavigationTheme}>
+      <AuthGuard />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="register" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
     </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    JetBrainsMono_400Regular,
+    JetBrainsMono_600SemiBold,
+    JetBrainsMono_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) return null;
+
+  return (
+    <ThemeContextProvider>
+      <AppWithTheme />
+    </ThemeContextProvider>
   );
 }

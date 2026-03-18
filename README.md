@@ -6,10 +6,14 @@ This project is a full stack application for managing recipes.
 
 Users can:
 
-* Create an account
-* Authenticate into the system
-* Create, edit, delete, and search recipes
-* Print recipes (web only)
+* Create an account and authenticate
+* Create, edit, delete, and search their own recipes
+* Filter recipes by category and tags
+* View recipe details with structured ingredients and step-by-step instructions
+* Mark recipes as favorites
+* Generate a shopping list from selected recipes
+* Print recipes via an async print queue (web)
+* Share a recipe via a public URL (`/{user_login}/{recipe_id}`) — no login required
 
 The system is composed of three main applications:
 
@@ -190,12 +194,29 @@ http://localhost:3000/docs
 
 ---
 
-## 🚀 Future Improvements
+## 🚀 Roadmap
 
-* Pagination and filtering
-* Offline support (mobile)
-* Role-based access control
-* Caching layer (Redis)
+Everything listed here will be built as part of this project.
+
+* **Recipes CRUD** — create, edit, delete, and list recipes with search by name
+* **Recipe categories & tags** — filter and organize by type (already modeled in DB)
+* **Public recipe URL** — each recipe is accessible at `/{user_login}/{recipe_id}` without authentication, allowing easy sharing
+* **Recipe photo upload** — image storage via S3/Cloudflare R2, displayed in cards and detail view
+* **Ingredients + step-by-step instructions** — structured fields with ordered steps
+* **Prep & cook time + servings** — displayed as quick-glance info on recipe cards
+* **Difficulty rating** — easy / medium / hard badge per recipe
+* **Nutritional info** — calories and macros per serving (manual input)
+* **Favorites / bookmarks** — star a recipe and filter by favorites
+* **Shopping list generation** — auto-generate an ingredients list from one or multiple selected recipes
+* **Recipe import from URL** — paste a link, the system scrapes and pre-fills the form
+* **Print queue via RabbitMQ** — async job for PDF generation and printing (web only)
+* **Pagination and filtering** — server-side pagination with category and tag filters
+* **Caching layer (Redis)** — cache recipe listings and public recipe pages
+* **Role-based access control** — admin and regular user roles
+* **Offline support (mobile)** — cache recipes locally for offline reading
+* **Swagger / OpenAPI docs** — auto-generated API docs at `/docs`
+* **Unit & integration tests** — business logic and endpoint coverage
+* **Dark/light mode toggle** — web, persisted to localStorage (toggle button in the header)
 
 ---
 
