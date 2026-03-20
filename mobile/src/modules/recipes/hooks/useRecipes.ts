@@ -58,7 +58,8 @@ export function useRecipes() {
       const r = await recipesService.create(input);
       return r;
     } catch (e: any) {
-      setError(e?.message ?? 'Erro ao criar receita');
+        const message = e?.response?.data?.error?.message ?? e?.response?.data?.message ?? e?.message ?? 'Erro ao criar receita';
+        setError(message);
       throw e;
     } finally {
       setLoading(false);
@@ -72,7 +73,8 @@ export function useRecipes() {
       const r = await recipesService.update(id, input);
       return r;
     } catch (e: any) {
-      setError(e?.message ?? 'Erro ao atualizar receita');
+        const message = e?.response?.data?.error?.message ?? e?.response?.data?.message ?? e?.message ?? 'Erro ao atualizar receita';
+        setError(message);
       throw e;
     } finally {
       setLoading(false);
@@ -85,7 +87,8 @@ export function useRecipes() {
     try {
       await recipesService.delete(id);
     } catch (e: any) {
-      setError(e?.message ?? 'Erro ao deletar receita');
+        const message = e?.response?.data?.error?.message ?? e?.response?.data?.message ?? e?.message ?? 'Erro ao deletar receita';
+        setError(message);
       throw e;
     } finally {
       setLoading(false);

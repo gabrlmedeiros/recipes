@@ -30,7 +30,7 @@ describe('RecipesController', () => {
   } as any;
 
   beforeEach(async () => {
-    listUseCase = { execute: jest.fn().mockResolvedValue({ recipes: [mockRecipe], pagination: { page: 1, limit: 20, total: 1, totalPages: 1 } }) };
+    listUseCase = { execute: jest.fn().mockResolvedValue({ items: [mockRecipe], pagination: { page: 1, limit: 20, total: 1, totalPages: 1 } }) };
     getUseCase = { execute: jest.fn().mockResolvedValue(mockRecipe) };
     createUseCase = { execute: jest.fn().mockResolvedValue(mockRecipe) };
     updateUseCase = { execute: jest.fn().mockResolvedValue({ ...mockRecipe, name: 'Atualizado' }) };
@@ -56,9 +56,9 @@ describe('RecipesController', () => {
   });
 
   it('lista receitas com paginação', async () => {
-    const res = await controller.list({ user: { id: 'u1' } } as any, '1', '20');
+    const res = await controller.list({ user: { id: 'u1' } } as any, { page: '1', limit: '20' } as any);
     expect(res).toHaveProperty('data');
-    expect((res as any).data.recipes).toHaveLength(1);
+    expect((res as any).data.items).toHaveLength(1);
   });
 
   it('retorna categorias', async () => {

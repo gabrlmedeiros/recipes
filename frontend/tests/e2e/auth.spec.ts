@@ -11,11 +11,13 @@ const emptyRecipesBody = JSON.stringify({
 });
 
 async function mockRecipesEmpty(page: Page) {
-  await page.route(
-    (url: URL) => url.port === '3000' && url.pathname.startsWith('/recipes'),
-    (route: Route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: emptyRecipesBody }),
-  );
+  await page.route((url: URL) => url.port === '3000' && url.pathname.startsWith('/recipes'), async (route: Route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: emptyRecipesBody });
+    } else {
+      await route.continue();
+    }
+  });
 }
 
 async function mockAuthSuccess(page: Page) {

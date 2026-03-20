@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams, useNavigation } from 'expo-router';
 import { AppInput } from '@/components/ui/AppInput';
@@ -79,7 +80,12 @@ export default function RecipeFormScreen() {
 
   async function handleSubmit() {
     setError('');
+    if (!form.name || form.name.trim().length === 0) {
+      setError('O nome da receita é obrigatório.');
+      return;
+    }
     try {
+      console.log('Submitting recipe', form);
       if (id) {
         if (!isUuid(id as string)) {
           throw new Error('ID inválido: deve ser um UUID');
@@ -90,9 +96,12 @@ export default function RecipeFormScreen() {
       }
       router.back();
     } catch (e: unknown) {
+      console.error(e);
       const err = e as { response?: { data?: { error?: { message?: string } } } };
       const apiMessage = err.response?.data?.error?.message;
-      setError(apiMessage ?? 'Erro ao criar receita. Tente novamente.');
+      const msg = apiMessage ?? 'Erro ao criar receita. Tente novamente.';
+      setError(msg);
+      Alert.alert('Erro', msg);
     }
   }
 

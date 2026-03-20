@@ -33,6 +33,7 @@ jest.mock('expo-router', () => {
 jest.mock('../../src/modules/recipes/recipes.service', () => ({
   recipesService: {
     list: jest.fn(),
+    getCategories: jest.fn(),
   },
 }));
 
@@ -106,13 +107,13 @@ const filledPaginated = {
 describe('RecipesScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // reset expo-router focus mock so useFocusEffect runs once per test
     try {
       const routerMock = require('expo-router');
       if (routerMock && typeof routerMock.__resetFocus === 'function') routerMock.__resetFocus();
     } catch (e) {
       // ignore
     }
+    jest.mocked(recipesService.getCategories).mockResolvedValue([mockCategory]);
   });
 
   it('exibe estado vazio quando não há receitas', async () => {
@@ -190,6 +191,49 @@ describe('RecipesScreen', () => {
 
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith('/login');
+    });
+  });
+
+  it('busca por palavra quando o botão Buscar é pressionado', async () => {
+    jest.mocked(recipesService.list).mockResolvedValue(emptyPaginated);
+    const renderResult = render(<RecipesScreen />);
+
+    await waitFor(() => renderResult.getByPlaceholderText('Buscar receitas'));
+    fireEvent.changeText(renderResult.getByPlaceholderText('Buscar receitas'), 'cenoura');
+    await waitFor(() => expect((renderResult.getByPlaceholderText('Buscar receitas') as any).props.value).toBe('cenoura'));
+    fireEvent.press(renderResult.getByTestId('buscar-button'));
+
+    await waitFor(() => {
+      expect(recipesService.list).toHaveBeenCalled();
+      const calls = jest.mocked(recipesService.list).mock.calls;
+      const call = calls[calls.length - 1]!;
+      expect(call[2]).toMatchObject({ q: 'cenoura' });
+    });
+  });
+
+  it('aplica filtros (categoria + min/max) via modal e chama list com filtros', async () => {
+    jest.mocked(recipesService.list).mockResolvedValue(emptyPaginated);
+    jest.mocked(recipesService.getCategories).mockResolvedValue([mockCategory]);
+
+    const renderResult = render(<RecipesScreen />);
+
+    await waitFor(() => renderResult.getByTestId('filtros-button'));
+    fireEvent.press(renderResult.getByTestId('filtros-button'));
+
+    await waitFor(() => renderResult.getByText('Selecionar categoria'));
+    fireEvent.press(renderResult.getByText('Selecionar categoria'));
+    await waitFor(() => renderResult.getByText(mockCategory.name));
+    fireEvent.press(renderResult.getByText(mockCategory.name));
+
+    fireEvent.changeText(renderResult.getByPlaceholderText('Min'), '10');
+    fireEvent.changeText(renderResult.getByPlaceholderText('Max'), '100');
+    fireEvent.press(renderResult.getByText('Aplicar'));
+
+    await waitFor(() => {
+      expect(recipesService.list).toHaveBeenCalled();
+      const calls = jest.mocked(recipesService.list).mock.calls;
+      const call = calls[calls.length - 1]!;
+      expect(call[2]).toMatchObject({ categoryId: mockCategory.id, minPrepTime: 10, maxPrepTime: 100 });
     });
   });
 });

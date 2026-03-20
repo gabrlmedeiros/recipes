@@ -38,9 +38,13 @@ export interface PaginatedRecipes {
 }
 
 export const recipesService = {
-  async list(page = 1, limit = 20): Promise<PaginatedRecipes> {
-    const { data } = await api.get<{ data: PaginatedRecipes }>('/recipes', { params: { page, limit } });
-    return data.data;
+  async list(page = 1, limit = 20, filters?: Record<string, any>): Promise<PaginatedRecipes> {
+    const params = { page, limit, ...filters };
+    const { data } = await api.get<any>('/recipes', { params });
+    const payload = data?.data ?? {};
+    const items = payload.items ?? payload.recipes ?? [];
+    const pagination = payload.pagination ?? { page, limit, total: 0, totalPages: 0 };
+    return { recipes: items, pagination } as PaginatedRecipes;
   },
 
   async create(input: RecipeInput): Promise<Recipe> {

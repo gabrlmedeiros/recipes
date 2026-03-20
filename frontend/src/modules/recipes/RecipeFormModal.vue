@@ -67,7 +67,7 @@ async function handleSubmit() {
     const savedRecipe = saved as Recipe;
     emit('saved', savedRecipe);
   } catch (e: unknown) {
-    const err = e as { response?: { data?: { error?: { message?: string; details?: Array<{ field?: string; message?: string; code?: string }> } } } };
+    const err = e as { response?: { data?: { error?: { message?: string; details?: { field?: string; message?: string; code?: string }[] } } } };
     const apiError = err.response?.data?.error;
     if (Array.isArray(apiError?.message) && apiError.message.length > 0) {
       errors.value = (apiError.message as any).map((m: any) => (typeof m === 'string' ? m : String(m)));

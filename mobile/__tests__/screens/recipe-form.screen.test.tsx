@@ -196,6 +196,8 @@ describe('RecipeFormScreen', () => {
     render(<RecipeFormScreen />);
 
     await waitFor(() => screen.getByText('Criar receita'));
+    fireEvent.changeText(screen.getByPlaceholderText('Ex: Bolo de cenoura'), 'Bolo de cenoura');
+    fireEvent.press(screen.getByText('Almoço'));
     fireEvent.press(screen.getByText('Criar receita'));
 
     await waitFor(() => {
@@ -212,6 +214,8 @@ describe('RecipeFormScreen', () => {
     render(<RecipeFormScreen />);
 
     await waitFor(() => screen.getByText('Criar receita'));
+    fireEvent.changeText(screen.getByPlaceholderText('Ex: Bolo de cenoura'), 'Bolo de cenoura');
+    fireEvent.press(screen.getByText('Almoço'));
     fireEvent.press(screen.getByText('Criar receita'));
 
     await waitFor(() => {
@@ -225,6 +229,8 @@ describe('RecipeFormScreen', () => {
     render(<RecipeFormScreen />);
 
     await waitFor(() => screen.getByText('Criar receita'));
+    fireEvent.changeText(screen.getByPlaceholderText('Ex: Bolo de cenoura'), 'Bolo de cenoura');
+    fireEvent.press(screen.getByText('Almoço'));
     fireEvent.press(screen.getByText('Criar receita'));
 
     await waitFor(() => {

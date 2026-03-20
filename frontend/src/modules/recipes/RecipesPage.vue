@@ -1,15 +1,38 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import AppButton from '../../components/AppButton.vue';
 import AppHeader from '../../components/AppHeader.vue';
 import { recipesService, type Recipe } from './';
 import RecipeFormModal from './RecipeFormModal.vue';
 import ConfirmModal from '../../components/ConfirmModal.vue';
+import RecipeSearchFilters from '../../components/RecipeSearchFilters.vue';
 
 const router = useRouter();
 
 const recipes = ref<Recipe[]>([]);
+const q = ref('');
+const filterCategory = ref('');
+const filterIngredient = ref('');
+const filterMinPrep = ref<number | null>(null);
+const filterMaxPrep = ref<number | null>(null);
+const sortBy = ref('');
+const order = ref<'asc' | 'desc'>('desc');
+const categories = ref<{ id: string; name: string }[]>([]);
+const showFilters = ref(false);
+const searchTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
+
+function clearFilters() {
+  q.value = '';
+  filterCategory.value = '';
+  filterIngredient.value = '';
+  filterMinPrep.value = null;
+  filterMaxPrep.value = null;
+  sortBy.value = '';
+  order.value = 'desc';
+  page.value = 1;
+  loadRecipes();
+}
 const loading = ref(false);
 const errorMessage = ref<string | null>(null);
 const page = ref(1);
@@ -37,8 +60,18 @@ async function loadRecipes() {
   loading.value = true;
   errorMessage.value = null;
   try {
-    const result = await recipesService.list(page.value);
-      const raw = result.recipes ?? [];
+    const filters: any = {
+      q: q.value || undefined,
+      categoryId: filterCategory.value || undefined,
+      ingredient: filterIngredient.value || undefined,
+      minPrepTime: filterMinPrep.value ?? undefined,
+      maxPrepTime: filterMaxPrep.value ?? undefined,
+      sortBy: sortBy.value ?? undefined,
+      order: order.value ?? undefined,
+    };
+
+    const result = await recipesService.list(page.value, 10, filters);
+      const raw = result.items ?? [];
       const valid = raw.filter((r) => r && typeof (r as any).id === 'string');
       const invalidCount = raw.length - valid.length;
       if (invalidCount > 0) {
@@ -102,6 +135,18 @@ async function onConfirmDelete() {
 }
 
 onMounted(loadRecipes);
+onMounted(async () => {
+  const cats = await recipesService.getCategories();
+  categories.value = cats;
+});
+
+watch(q, () => {
+  if (searchTimeout.value) clearTimeout(searchTimeout.value as ReturnType<typeof setTimeout>);
+  searchTimeout.value = window.setTimeout(() => {
+    page.value = 1;
+    void loadRecipes();
+  }, 450);
+});
 </script>
 
 <template>
@@ -115,6 +160,59 @@ onMounted(loadRecipes);
         <AppButton class="!py-2 !px-4 text-sm" @click="openCreate">
           + Nova receita
         </AppButton>
+      </div>
+
+      <!-- Search + filters component -->
+      <RecipeSearchFilters
+        v-model="q"
+        :categories="categories"
+        @search="() => { page = 1; loadRecipes(); }"
+        @apply="(f) => { filterCategory = f.categoryId ?? ''; filterIngredient = f.ingredient ?? ''; filterMinPrep = f.minPrepTime ?? null; filterMaxPrep = f.maxPrepTime ?? null; sortBy = f.sortBy ?? ''; order = f.order ?? 'desc'; page = 1; loadRecipes(); }"
+        @clear="() => { clearFilters(); }"
+      />
+
+      <!-- Expanded filters (hidden by default, compact layout) -->
+      <div v-if="showFilters" class="mb-6 bg-bg-surface border border-border-primary rounded-lg p-4 w-full">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 items-center">
+          <div>
+            <label class="sr-only">Categoria</label>
+            <select v-model="filterCategory" :class="['w-full bg-bg-surface border border-border-primary rounded-lg px-3 py-2', filterCategory === '' ? 'text-text-tertiary' : 'text-text-primary']">
+              <option value="" disabled>Categoria</option>
+              <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="sr-only">Ingrediente</label>
+            <input v-model="filterIngredient" type="text" placeholder="Ingrediente" class="w-full bg-bg-surface border border-border-primary rounded-lg px-3 py-2 placeholder:text-text-tertiary" />
+          </div>
+
+          <div class="flex gap-2">
+            <label class="sr-only">Min prep</label>
+            <input v-model.number="filterMinPrep" type="number" min="0" placeholder="Min" class="w-full bg-bg-surface border border-border-primary rounded-lg px-3 py-2" />
+            <label class="sr-only">Max prep</label>
+            <input v-model.number="filterMaxPrep" type="number" min="0" placeholder="Max" class="w-full bg-bg-surface border border-border-primary rounded-lg px-3 py-2" />
+          </div>
+
+          <div class="flex gap-2">
+            <label class="sr-only">Ordenar</label>
+            <select v-model="sortBy" :class="['w-full bg-bg-surface border border-border-primary rounded-lg px-3 py-2', sortBy === '' ? 'text-text-tertiary' : 'text-text-primary']">
+              <option value="" disabled>Ordenar</option>
+              <option value="createdAt">Mais recentes</option>
+              <option value="name">Nome</option>
+              <option value="prepTimeMinutes">Tempo de preparo</option>
+            </select>
+            <select v-model="order" class="w-full bg-bg-surface border border-border-primary rounded-lg px-3 py-2">
+              <option value="desc">Desc</option>
+              <option value="asc">Asc</option>
+            </select>
+          </div>
+
+          <div class="sm:col-span-2 md:col-span-2 flex justify-end items-center gap-2">
+            <AppButton class="!py-2 !px-4 text-sm" @click="(page = 1, loadRecipes())">Aplicar</AppButton>
+            <button type="button" class="px-3 py-2 rounded-lg text-sm border border-border-primary" @click="clearFilters">Limpar</button>
+          </div>
+        </div>
       </div>
 
       <!-- Loading -->

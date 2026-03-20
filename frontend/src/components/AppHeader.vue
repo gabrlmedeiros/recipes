@@ -29,7 +29,7 @@ async function onLogout() {
 
 <template>
   <header class="border-b border-border-primary bg-bg-surface">
-    <div class="px-6 py-6 max-w-4xl mx-auto w-full grid grid-cols-3 items-center">
+    <div class="px-6 py-2 max-w-4xl mx-auto w-full grid grid-cols-3 items-center">
       <div class="flex items-center">
         <div v-if="showBack">
           <AppButton variant="ghost" class="!py-2" @click="onBack">←</AppButton>

@@ -22,6 +22,10 @@ export default function RegisterScreen() {
 
   async function handleRegister() {
     setError('');
+    if ((form.password ?? '').length < 6) {
+      setError('A senha precisa ter pelo menos 6 caracteres.');
+      return;
+    }
     if (form.password !== form.confirmPassword) {
       setError('As senhas não coincidem.');
       return;

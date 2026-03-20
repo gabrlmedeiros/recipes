@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { recipesService, type Recipe } from './';
 import AppButton from '../../components/AppButton.vue';
 import AppHeader from '../../components/AppHeader.vue';
+import RecipeFormModal from './RecipeFormModal.vue';
 
 const route = useRoute();
 const id = String(route.params.id ?? '');
@@ -12,6 +13,7 @@ const id = String(route.params.id ?? '');
 const recipe = ref<Recipe | null>(null);
 const loading = ref(false);
 const errorMessage = ref<string | null>(null);
+const modalOpen = ref(false);
 
 const ingredients = computed(() => {
   const v = recipe.value?.ingredients;
@@ -66,6 +68,16 @@ function formatDate(iso?: string | null) {
 }
 
 onMounted(load);
+
+function openEdit() {
+  if (!recipe.value) return;
+  modalOpen.value = true;
+}
+
+async function onSaved(saved: Recipe) {
+  recipe.value = saved;
+  modalOpen.value = false;
+}
 </script>
 
 <template>
@@ -85,11 +97,19 @@ onMounted(load);
       </div>
 
       <article v-else-if="recipe" class="bg-bg-surface border border-border-primary rounded-xl p-6">
-        <h2 class="text-2xl font-semibold text-text-primary">{{ recipe.name }}</h2>
+        <div class="flex items-center justify-between gap-4">
+          <h2 class="text-2xl font-semibold text-text-primary">{{ recipe.name }}</h2>
+          <div class="flex-shrink-0">
+            <AppButton class="!py-1 !px-3 text-sm" variant="ghost" @click="openEdit">Editar</AppButton>
+          </div>
+        </div>
+
         <div class="flex items-center gap-3 mt-3 text-sm text-text-secondary">
-          <span class="px-2 py-0.5 rounded-full bg-bg-elevated">{{ recipe.category?.name ?? '–' }}</span>
-          <span>• {{ recipe.prepTimeMinutes ?? '–' }} min</span>
-          <span>• {{ recipe.servings ?? '–' }} porção{{ recipe.servings === 1 ? '' : 'es' }}</span>
+          <div class="flex items-center gap-3 flex-1">
+            <span class="px-2 py-0.5 rounded-full bg-bg-elevated">{{ recipe.category?.name ?? '–' }}</span>
+            <span>• {{ recipe.prepTimeMinutes ?? '–' }} min</span>
+            <span>• {{ recipe.servings ?? '–' }} porção{{ recipe.servings === 1 ? '' : 'es' }}</span>
+          </div>
         </div>
 
         <section class="mt-6">
@@ -109,5 +129,6 @@ onMounted(load);
         <footer class="mt-6 text-text-tertiary text-xs">Criado em: {{ formatDate(recipe.createdAt) }} • Última atualização: {{ formatDate(recipe.updatedAt) }}</footer>
       </article>
     </main>
+    <RecipeFormModal :open="modalOpen" :recipe="recipe" @close="modalOpen = false" @saved="onSaved" />
   </div>
 </template>

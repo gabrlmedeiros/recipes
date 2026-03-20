@@ -10,14 +10,12 @@ Users can:
 * Create, edit, delete, and search their own recipes
 * Filter recipes by category and tags
 * View recipe details with structured ingredients and step-by-step instructions
-* Mark recipes as favorites
-* Generate a shopping list from selected recipes
 * Print recipes via an async print queue (web)
 * Share a recipe via a public URL (`/{user_login}/{recipe_id}`) — no login required
 
 The system is composed of three main applications:
 
-* Backend API (Node.js)
+* Backend API (Nest.js)
 * Web application (Vue.js)
 * Mobile application (React Native)
 
@@ -30,7 +28,7 @@ All clients consume the same backend API.
 This project follows a **feature-based architecture** with clear separation of concerns across all layers:
 
 * Backend → Controller → Service → Repository
-* Frontend → UI → Hooks/Composables → Services
+* Frontend → UI → Hooks → Services
 * Mobile → Screens → Hooks → Services
 
 Consistency across all platforms is a core principle.
@@ -43,7 +41,6 @@ Consistency across all platforms is a core principle.
 
 * Node.js
 * TypeScript
-* Fastify
 * Prisma ORM
 * MySQL
 * JWT (Authentication)

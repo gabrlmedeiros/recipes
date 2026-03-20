@@ -32,21 +32,23 @@ async function setAuth(page: Page) {
 }
 
 async function mockRecipesList(page: Page, recipes: typeof mockRecipe[] = []) {
-    await page.route(
-      (url) => url.port === '3000' && url.pathname.startsWith('/recipes'),
-    (route: Route) =>
-      route.fulfill({
+  await page.route((url) => url.port === '3000' && url.pathname.startsWith('/recipes'), async (route: Route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           data: {
-            recipes,
+            items: recipes,
             pagination: { page: 1, limit: 10, total: recipes.length, totalPages: Math.ceil(recipes.length / 10) || 0 },
           },
           error: null,
         }),
-      }),
-  );
+      });
+    } else {
+      await route.continue();
+    }
+  });
 }
 
 async function mockCategories(page: Page) {
@@ -94,6 +96,69 @@ test.describe('Página de receitas — listagem', () => {
 
     await expect(page.getByRole('button', { name: '+ Nova receita' })).toBeVisible();
   });
+
+  test('busca por palavra exibe resultados ao pressionar Enter', async ({ page }) => {
+    await setAuth(page);
+    await mockCategories(page);
+
+    await page.route((url) => url.port === '3000' && url.pathname.startsWith('/recipes'), async (route: Route) => {
+      const reqUrl = route.request().url();
+      if (reqUrl.includes('q=cenoura')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ data: { items: [mockRecipe], pagination: { page: 1, limit: 10, total: 1, totalPages: 1 } }, error: null }),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ data: { items: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } }, error: null }),
+        });
+      }
+    });
+
+    await page.goto('/recipes');
+    await page.getByPlaceholder('Buscar receitas, ingredientes ou modo de preparo').fill('cenoura');
+    await page.getByPlaceholder('Buscar receitas, ingredientes ou modo de preparo').press('Enter');
+
+    await expect(page.getByText('Bolo de cenoura')).toBeVisible();
+  });
+
+  test('aplica filtros (categoria + intervalo de preparo) e mostra resultados', async ({ page }) => {
+    await setAuth(page);
+    await mockCategories(page);
+
+    await page.route((url) => url.port === '3000' && url.pathname.startsWith('/recipes') && !url.pathname.endsWith('/categories'), async (route: Route) => {
+      const reqUrl = route.request().url();
+      if (reqUrl.includes('categoryId=' + mockCategory.id) && reqUrl.includes('minPrepTime=10')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ data: { items: [mockRecipe], pagination: { page: 1, limit: 10, total: 1, totalPages: 1 } }, error: null }),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ data: { items: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } }, error: null }),
+        });
+      }
+    });
+
+    await page.goto('/recipes');
+    await page.waitForResponse((resp) => resp.url().endsWith('/recipes/categories') && resp.status() === 200);
+    await page.getByTitle('Filtros').click();
+    const categorySelect = page.locator(`select:has(option:has-text("Categoria"))`).first();
+    await expect(categorySelect).toBeVisible();
+    await expect(categorySelect.locator(`option[value="${mockCategory.id}"]`)).toHaveCount(1, { timeout: 5000 });
+    await categorySelect.selectOption({ value: mockCategory.id });
+    await page.getByPlaceholder('Min').fill('10');
+    await page.getByPlaceholder('Max').fill('100');
+    await page.getByRole('button', { name: 'Aplicar' }).click();
+
+    await expect(page.getByText('Bolo de cenoura')).toBeVisible();
+  });
 });
 
 // ─── Criação ──────────────────────────────────────────────────────────────────
@@ -124,7 +189,7 @@ test.describe('Página de receitas — criação', () => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ data: { recipes: [mockRecipe], pagination: { page: 1, limit: 10, total: 1, totalPages: 1 } }, error: null }),
+          body: JSON.stringify({ data: { items: [mockRecipe], pagination: { page: 1, limit: 10, total: 1, totalPages: 1 } }, error: null }),
         });
       }
     });
@@ -144,7 +209,7 @@ test.describe('Página de receitas — criação', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ data: { recipes: [mockRecipe], pagination: { page: 1, limit: 10, total: 1, totalPages: 1 } }, error: null }),
+          body: JSON.stringify({ data: { items: [mockRecipe], pagination: { page: 1, limit: 10, total: 1, totalPages: 1 } }, error: null }),
         }),
     );
 
@@ -218,7 +283,7 @@ test.describe('Página de receitas — edição', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ data: { recipes: [{ ...mockRecipe, name: 'Bolo de baunilha' }], pagination: { page: 1, limit: 10, total: 1, totalPages: 1 } }, error: null }),
+          body: JSON.stringify({ data: { items: [{ ...mockRecipe, name: 'Bolo de baunilha' }], pagination: { page: 1, limit: 10, total: 1, totalPages: 1 } }, error: null }),
         }),
     );
 
@@ -275,7 +340,7 @@ test.describe('Página de receitas — exclusão', () => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ data: { recipes: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } }, error: null }),
+          body: JSON.stringify({ data: { items: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } }, error: null }),
         }),
     );
 
@@ -303,7 +368,7 @@ test.describe('Página de receitas — paginação', () => {
           contentType: 'application/json',
           body: JSON.stringify({
             data: {
-              recipes: [mockRecipe],
+              items: [mockRecipe],
               pagination: { page: 1, limit: 10, total: 15, totalPages: 2 },
             },
             error: null,

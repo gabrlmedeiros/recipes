@@ -22,12 +22,15 @@ export function AppInput({ label, error, style, secureTextEntry, ...props }: Pro
       <View style={styles.inputWrapper}>
         <TextInput
           editable={props.editable ?? true}
-          style={[styles.input, isPassword && styles.inputWithIcon, !!error && styles.inputError, style]}
+          style={[styles.input, isPassword && styles.inputWithIcon, !!error && styles.inputError, style, { color: colors.textPrimary }]}
           placeholderTextColor={colors.textSecondary}
+          selectionColor={colors.primary}
           secureTextEntry={isPassword && !showPassword}
           onChangeText={(text) => {
             if (props.onChangeText) props.onChangeText(text);
           }}
+          textAlignVertical="center"
+          autoCorrect={false}
           {...props}
         />
         {isPassword && (

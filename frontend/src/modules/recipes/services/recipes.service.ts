@@ -28,7 +28,7 @@ export interface RecipeInput {
 }
 
 export interface PaginatedRecipes {
-  recipes: Recipe[];
+  items: Recipe[];
   pagination: {
     page: number;
     limit: number;
@@ -37,9 +37,29 @@ export interface PaginatedRecipes {
   };
 }
 
+export type RecipesListFilters = {
+  q?: string;
+  categoryId?: string;
+  ingredient?: string;
+  minPrepTime?: number;
+  maxPrepTime?: number;
+  sortBy?: string;
+  order?: 'asc' | 'desc';
+};
+
 export const recipesService = {
-  async list(page = 1, limit = 10): Promise<PaginatedRecipes> {
-    const { data } = await api.get<{ data: PaginatedRecipes }>('/recipes', { params: { page, limit } });
+  async list(page = 1, limit = 10, filters?: RecipesListFilters): Promise<PaginatedRecipes> {
+    const params: any = { page, limit };
+    if (filters) {
+      if (filters.q) params.q = filters.q;
+      if (filters.categoryId) params.categoryId = filters.categoryId;
+      if (filters.ingredient) params.ingredient = filters.ingredient;
+      if (filters.minPrepTime !== undefined) params.minPrepTime = filters.minPrepTime;
+      if (filters.maxPrepTime !== undefined) params.maxPrepTime = filters.maxPrepTime;
+      if (filters.sortBy) params.sortBy = filters.sortBy;
+      if (filters.order) params.order = filters.order;
+    }
+    const { data } = await api.get<{ data: PaginatedRecipes }>('/recipes', { params });
     return data.data;
   },
 

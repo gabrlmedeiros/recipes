@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query, UseGuards, Request } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query, UseGuards, Request, HttpException } from '@nestjs/common';
 import { CreateRecipeInput } from './application/dto/create-recipe.dto';
 import { RecipeOwnerGuard } from './application/guards/recipe-owner.guard';
 import { ListRecipesUseCase } from './application/use-cases/list-recipes.use-case';
@@ -8,6 +8,7 @@ import { UpdateRecipeUseCase } from './application/use-cases/update-recipe.use-c
 import { DeleteRecipeUseCase } from './application/use-cases/delete-recipe.use-case';
 import { GetCategoriesUseCase } from './application/use-cases/get-categories.use-case';
 import { JwtAuthGuard } from '../auth/application/guards/jwt-auth.guard';
+import { SearchRecipesDto } from './application/dto/search-recipes.dto';
 
 @Controller('recipes')
 export class RecipesController {
@@ -22,11 +23,34 @@ export class RecipesController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async list(@Request() req: any, @Query('page') page = '1', @Query('limit') limit = '20') {
-    const p = parseInt(page as any, 10) || 1;
-    const l = parseInt(limit as any, 10) || 20;
+  async list(@Request() req: any, @Query() query: SearchRecipesDto) {
+    const p = Number(query.page ?? 1) || 1;
+    const l = Number(query.limit ?? 20) || 20;
     const userId = req.user?.id as string | undefined;
-    return { data: await this.listUseCase.execute(p, l, userId), error: null };
+    const filters = {
+      q: query.q,
+      categoryId: query.categoryId,
+      ingredient: query.ingredient,
+      minPrepTime: query.minPrepTime,
+      maxPrepTime: query.maxPrepTime,
+      sortBy: query.sortBy,
+      order: query.order,
+    };
+
+    try {
+      const data = await this.listUseCase.execute(p, l, userId, filters);
+      return { data, error: null };
+    } catch (err: unknown) {
+      console.error('Error in RecipesController.list:', err);
+      let message = 'Falha na busca';
+      if (err && typeof err === 'object') {
+        const maybe = err as { message?: unknown };
+        if (typeof maybe.message === 'string') message = maybe.message;
+      } else if (typeof err === 'string') {
+        message = err;
+      }
+      throw new HttpException({ message, code: 'INTERNAL_ERROR' }, 500);
+    }
   }
 
   @Get('categories')

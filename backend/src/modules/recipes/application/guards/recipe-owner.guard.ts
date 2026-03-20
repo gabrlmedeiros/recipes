@@ -18,7 +18,7 @@ export class RecipeOwnerGuard implements CanActivate {
       throw new HttpException({ message: 'Recurso não encontrado' }, 404);
     }
 
-    const recipe = await this.prisma.recipe.findUnique({ where: { id: id as any }, include: { category: true, user: true } });
+    const recipe = await this.prisma.recipe.findUnique({ where: { id }, include: { category: true, user: true } });
     if (!recipe) {
       throw new HttpException({ message: 'Receita não encontrada' }, 404);
     }

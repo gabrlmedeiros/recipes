@@ -10,16 +10,16 @@
     "SFMono-Regular", "Menlo", monospace;
 
   --color-bg-page: #0a0a0a;
-  --color-bg-surface: #0f0f0f;
-  --color-bg-elevated: #1a1a1a;
-  --color-bg-input: #111111;
+  --color-bg-surface: #111216;
+  --color-bg-elevated: #1f1f23;
+  --color-bg-input: #16171a;
 
-  --color-text-primary: #fafafa;
-  --color-text-secondary: #6b7280;
-  --color-text-tertiary: #4b5563;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #d9dbe0;
+  --color-text-tertiary: #b9c0c6;
 
-  --color-border-primary: #2a2a2a;
-  --color-border-secondary: #252525;
+  --color-border-primary: #33363a;
+  --color-border-secondary: #2b2e31;
   --color-border-focus: #10b981;
 
   --color-accent-green: #10b981;
@@ -30,7 +30,7 @@
   --color-accent-cyan: #06b6d4;
 
   --color-primary: #ff8400;
-  --color-primary-foreground: #111111;
+  --color-primary-foreground: #ffffff;
   --color-destructive: #ff5c33;
 
   --color-green-primary: #22c55e;
@@ -51,7 +51,10 @@ html.light {
 }
 
 @layer base {
-  *, *::before, *::after {
+
+  *,
+  *::before,
+  *::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -67,5 +70,54 @@ html.light {
   body {
     background-color: var(--color-bg-page);
     color: var(--color-text-primary);
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
   }
 }
+  input,
+  textarea,
+  select {
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-input);
+    border-color: var(--color-border-primary);
+    -webkit-text-fill-color: var(--color-text-primary);
+  }
+
+  input::placeholder,
+  textarea::placeholder,
+  select::placeholder {
+    color: var(--color-text-tertiary);
+    opacity: 0.6;
+  }
+
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: none;
+  }
+
+  /* Neutralize browser autofill background/text colors (Chrome/Safari) */
+  input:-webkit-autofill,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-text-primary) !important;
+    -webkit-box-shadow: 0 0 0px 1000px var(--color-bg-input) inset !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+  }
+
+  /* Ensure accent elements match theme */
+  input,
+  textarea,
+  select,
+  button {
+    accent-color: var(--color-primary);
+  }

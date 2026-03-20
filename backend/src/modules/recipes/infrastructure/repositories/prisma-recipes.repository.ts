@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../../../../infrastructure/prisma/prisma.service';
 import { RecipesRepository, Paginated, CreateRecipeData } from '../../domain/repositories/recipes.repository';
 import { Recipe } from '../../domain/entities/recipe.entity';
@@ -23,11 +23,37 @@ export class PrismaRecipesRepository implements RecipesRepository {
     };
   }
 
-  async list(page = 1, limit = 20, userId?: string): Promise<Paginated<Recipe>> {
+  async list(page = 1, limit = 20, userId?: string, filters?: any): Promise<Paginated<Recipe>> {
     const skip = (page - 1) * limit;
-    const where = userId ? { userId: userId as any } : undefined;
+    const where: any = {};
+    if (userId) where.userId = userId;
+
+    if (filters) {
+      const { q, categoryId, ingredient, minPrepTime, maxPrepTime } = filters;
+      if (categoryId) where.categoryId = categoryId;
+      const minPrep = minPrepTime !== undefined && minPrepTime !== null ? Number(minPrepTime) : undefined;
+      const maxPrep = maxPrepTime !== undefined && maxPrepTime !== null ? Number(maxPrepTime) : undefined;
+      if (minPrep !== undefined || maxPrep !== undefined) {
+        where.prepTimeMinutes = {};
+        if (minPrep !== undefined && !Number.isNaN(minPrep)) where.prepTimeMinutes.gte = minPrep;
+        if (maxPrep !== undefined && !Number.isNaN(maxPrep)) where.prepTimeMinutes.lte = maxPrep;
+      }
+      if (ingredient) {
+        where.ingredients = { contains: String(ingredient) };
+      }
+      if (q) {
+        where.OR = [
+          { name: { contains: String(q) } },
+          { ingredients: { contains: String(q) } },
+          { prepMethod: { contains: String(q) } },
+        ];
+      }
+    }
+
+    const orderBy: any = filters && filters.sortBy ? { [filters.sortBy]: (filters.order || 'asc') } : { id: 'desc' };
+
     const [items, total] = await Promise.all([
-      this.prisma.recipe.findMany({ where, skip, take: limit, include: { category: true }, orderBy: { id: 'desc' } }),
+      this.prisma.recipe.findMany({ where, skip, take: limit, include: { category: true }, orderBy }),
       this.prisma.recipe.count({ where }),
     ]);
 
@@ -38,15 +64,18 @@ export class PrismaRecipesRepository implements RecipesRepository {
   }
 
   async getById(id: string): Promise<Recipe | null> {
-    const r = await this.prisma.recipe.findUnique({ where: { id: id as any }, include: { category: true, user: true } });
-    return this.toDomain(r as any);
+    const r = await this.prisma.recipe.findUnique({ where: { id }, include: { category: true, user: true } });
+    return this.toDomain(r);
   }
 
   async create(input: CreateRecipeData): Promise<Recipe> {
+    if (!input || !input.name) {
+      throw new HttpException({ message: 'O nome da receita é obrigatório', code: 'BAD_REQUEST' }, HttpStatus.BAD_REQUEST);
+    }
     const r = await this.prisma.recipe.create({
       data: {
-        userId: input.userId as any,
-        categoryId: input.categoryId as any,
+        userId: input.userId,
+        categoryId: input.categoryId,
         name: input.name,
         prepTimeMinutes: input.prepTimeMinutes,
         servings: input.servings,
@@ -55,7 +84,7 @@ export class PrismaRecipesRepository implements RecipesRepository {
       },
       include: { category: true },
     });
-    return this.toDomain(r as any);
+    return this.toDomain(r);
   }
 
   async update(id: string, input: Partial<Recipe>): Promise<Recipe> {
@@ -63,12 +92,12 @@ export class PrismaRecipesRepository implements RecipesRepository {
     for (const [k, v] of Object.entries(input)) {
       if (v !== undefined) data[k] = v;
     }
-    const r = await this.prisma.recipe.update({ where: { id: id as any }, data, include: { category: true } });
-    return this.toDomain(r as any);
+    const r = await this.prisma.recipe.update({ where: { id }, data, include: { category: true } });
+    return this.toDomain(r);
   }
 
   async delete(id: string): Promise<void> {
-    await this.prisma.recipe.delete({ where: { id: id as any } });
+    await this.prisma.recipe.delete({ where: { id } });
   }
 
   async getCategories(): Promise<{ id: string; name: string }[]> {
