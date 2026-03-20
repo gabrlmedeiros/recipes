@@ -1,17 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '../../store/auth';
 import AppButton from '../../components/AppButton.vue';
-import { useTheme } from '../../composables/use-theme';
+import AppHeader from '../../components/AppHeader.vue';
 import { recipesService, type Recipe } from './';
 import RecipeFormModal from './RecipeFormModal.vue';
-import RecipeViewModal from './RecipeViewModal.vue';
 import ConfirmModal from '../../components/ConfirmModal.vue';
 
 const router = useRouter();
-const authStore = useAuthStore();
-const { isDark, toggleTheme } = useTheme();
 
 const recipes = ref<Recipe[]>([]);
 const loading = ref(false);
@@ -26,12 +22,8 @@ const confirmTargetId = ref<string | null>(null);
 const confirmLoading = ref(false);
 const confirmTitle = ref('Excluir receita');
 const confirmMessage = ref('Tem certeza que deseja excluir esta receita? Esta ação não pode ser desfeita.');
-const viewOpen = ref(false);
-const viewRecipe = ref<Recipe | null>(null);
-
-function openView(recipe: Recipe) {
-  viewRecipe.value = recipe;
-  viewOpen.value = true;
+function goToRecipe(id: string) {
+  router.push({ name: 'RecipeDetails', params: { id } });
 }
 
 const servingsText = (servings?: number | null) => {
@@ -109,37 +101,12 @@ async function onConfirmDelete() {
   }
 }
 
-async function handleLogout() {
-  await authStore.logoutAsync();
-  router.push('/login');
-}
-
 onMounted(loadRecipes);
 </script>
 
 <template>
   <div class="min-h-screen bg-bg-page">
-    <header class="flex items-center justify-between px-6 py-4 border-b border-border-primary bg-bg-surface">
-      <span class="text-text-primary font-bold text-lg">🍽️ Receitas</span>
-      <div class="flex items-center gap-2">
-        <button
-          class="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
-          :title="isDark ? 'Tema claro' : 'Tema escuro'"
-          @click="toggleTheme"
-        >
-          <svg v-if="isDark" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="4"/>
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
-          </svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-        </button>
-        <AppButton variant="ghost" class="!py-2 !px-4 text-sm" @click="handleLogout">
-          Sair
-        </AppButton>
-      </div>
-    </header>
+    <AppHeader title="🍽️ Receitas" :show-back="false" />
 
     <main class="p-6 max-w-4xl mx-auto">
       <!-- Toolbar -->
@@ -177,7 +144,7 @@ onMounted(loadRecipes);
           class="bg-bg-surface border border-border-primary rounded-xl p-5 flex flex-col gap-2"
         >
           <div class="flex items-start justify-between gap-4">
-              <div class="flex-1 min-w-0 cursor-pointer" @click="openView(recipe)">
+                <div class="flex-1 min-w-0 cursor-pointer" @click="goToRecipe(recipe.id)">
                 <h2 class="text-text-primary font-semibold text-base truncate">{{ recipe.name }}</h2>
               <div class="flex items-center gap-3 mt-1">
                 <span class="text-xs text-text-secondary bg-bg-elevated px-2 py-0.5 rounded-full">
@@ -254,7 +221,6 @@ onMounted(loadRecipes);
       @close="modalOpen = false"
       @saved="onSaved"
     />
-    <RecipeViewModal :model-value="viewOpen" :recipe="viewRecipe" @update:model-value="viewOpen = $event" />
     <ConfirmModal
       v-model:model-value="confirmOpen"
       :title="confirmTitle"

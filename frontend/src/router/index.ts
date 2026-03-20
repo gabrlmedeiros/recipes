@@ -24,6 +24,12 @@ export const router = createRouter({
       component: () => import('../modules/recipes/RecipesPage.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/recipes/:id',
+      name: 'RecipeDetails',
+      component: () => import('../modules/recipes/RecipeDetailsPage.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 });
 
