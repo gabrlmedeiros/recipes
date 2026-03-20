@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import LoginScreen from '../../app/login';
+import LoginScreen from '../../app/(auth)/login';
 import { authService } from '../../src/modules/auth/auth.service';
 import { storage } from '../../src/shared/storage/storage';
 
@@ -28,9 +28,18 @@ jest.mock('../../src/shared/storage/storage', () => ({
 
 const mockAuthResult = {
   token: 'mock-token',
-  user: { id: 1, name: 'João Silva', login: 'joaosilva' },
+  user: { id: '1', name: 'João Silva', login: 'joaosilva' },
 };
 
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    getItem: jest.fn(async () => null),
+    setItem: jest.fn(async () => null),
+    removeItem: jest.fn(async () => null),
+    clear: jest.fn(async () => null),
+  },
+}));
 describe('LoginScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();

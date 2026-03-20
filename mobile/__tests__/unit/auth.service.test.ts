@@ -12,7 +12,7 @@ const mockResponse = {
   data: {
     data: {
       token: 'mock-token',
-      user: { id: 1, name: 'João Silva', login: 'joaosilva' },
+      user: { id: '1', name: 'João Silva', login: 'joaosilva' },
     },
   },
 };
@@ -31,10 +31,10 @@ describe('authService (mobile)', () => {
       expect(api.post).toHaveBeenCalledWith('/auth/login', {
         login: 'joaosilva',
         password: 'senha123',
-      });
+      }, { headers: { 'X-Platform': 'mobile' } });
       expect(result).toEqual({
         token: 'mock-token',
-        user: { id: 1, name: 'João Silva', login: 'joaosilva' },
+        user: { id: '1', name: 'João Silva', login: 'joaosilva' },
       });
     });
 
@@ -58,7 +58,7 @@ describe('authService (mobile)', () => {
         name: 'João Silva',
         login: 'joaosilva',
         password: 'senha123',
-      });
+      }, { headers: { 'X-Platform': 'mobile' } });
       expect(result.token).toBe('mock-token');
       expect(result.user.login).toBe('joaosilva');
     });

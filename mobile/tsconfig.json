@@ -7,13 +7,29 @@
     "baseUrl": "./",
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
+      ],
+      "@/components/*": [
+        "./src/components/*"
+      ],
+      "@/components/ui": [
+        "./src/components/ui/index"
+      ],
+      "@/components/ui/*": [
+        "./src/components/ui/*"
+      ],
+      "@/hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@/constants/*": [
+        "./src/constants/*"
       ]
     },
     "types": [
       "react",
       "react-native",
-      "node"
+      "node",
+      "jest"
     ]
   },
   "include": [

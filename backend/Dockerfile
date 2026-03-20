@@ -10,6 +10,7 @@ COPY prisma ./prisma
 COPY src ./src
 
 RUN npx prisma generate
+RUN node prisma/seed.js || true
 RUN npx tsc --build
 
 # ---
@@ -31,4 +32,4 @@ ENV NODE_ENV=production
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/app.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

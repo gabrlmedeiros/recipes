@@ -5,7 +5,21 @@ const API = 'http://localhost:3000';
 const mockUser = { id: 1, name: 'João Silva', login: 'joaosilva' };
 const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImV4cCI6OTk5OTk5OTk5OX0.mock';
 
+const emptyRecipesBody = JSON.stringify({
+  data: { recipes: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } },
+  error: null,
+});
+
+async function mockRecipesEmpty(page: Page) {
+  await page.route(
+    (url: URL) => url.port === '3000' && url.pathname.startsWith('/recipes'),
+    (route: Route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: emptyRecipesBody }),
+  );
+}
+
 async function mockAuthSuccess(page: Page) {
+  await mockRecipesEmpty(page);
   await page.route(`${API}/auth/login`, (route: Route) =>
     route.fulfill({
       status: 200,
@@ -145,6 +159,7 @@ test.describe('Página de cadastro', () => {
 test.describe('Página de receitas', () => {
   test.beforeEach(async ({ page }) => {
     // Injeta token válido no localStorage para simular usuário autenticado
+    await mockRecipesEmpty(page);
     await page.goto('/login');
     await page.evaluate(
       ({ token, user }) => {

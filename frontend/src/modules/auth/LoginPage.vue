@@ -31,8 +31,8 @@ async function handleSubmit() {
   <div class="min-h-screen bg-bg-page flex items-center justify-center px-4 py-10">
     <div class="w-full max-w-sm">
       <div class="text-center mb-10">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-bg-elevated border border-border-primary mb-5 text-3xl">
-          🍳
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-5 text-5xl">
+          🍽️
         </div>
         <h1 class="text-2xl font-bold text-text-primary">Bem-vindo de volta</h1>
         <p class="text-text-secondary text-sm mt-1">Entre na sua conta para continuar</p>

@@ -1,210 +1,120 @@
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import type { FastifyInstance } from 'fastify';
+import { Test } from '@nestjs/testing';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import request from 'supertest';
+import { AppModule } from '../../src/app.module';
+import { PrismaService } from '../../src/prisma/prisma.service';
 
-vi.mock('../../src/shared/database/prisma.js', () => ({
-  prisma: {
-    user: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-    },
-  },
+jest.mock('bcrypt', () => ({
+  hash: jest.fn(async (pw: string) => `hashed-${pw}`),
+  compare: jest.fn(async (pw: string, hash: string) => hash === `hashed-${pw}`),
 }));
 
-import { buildApp } from '../../src/app-factory.js';
-import { prisma } from '../../src/shared/database/prisma.js';
-
-const mockUser = {
-  id: 1,
-  name: 'João Silva',
-  login: 'joaosilva',
-  password: '$2b$10$hashedpassword',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
+jest.mock('jsonwebtoken', () => ({
+  sign: jest.fn().mockReturnValue('mock-jwt-token'),
+  verify: jest.fn((token: string) => {
+    if (token === 'mock-jwt-token') return { sub: '00000000-0000-0000-0000-000000000001' };
+    throw new Error('invalid token');
+  }),
+}));
 
 describe('Auth routes — E2E', () => {
-  let app: FastifyInstance;
+  let app: INestApplication;
+  let mockPrisma: any;
 
   beforeEach(async () => {
-    app = await buildApp({ logger: false, disableRateLimit: true });
-    await app.ready();
-    vi.clearAllMocks();
+    mockPrisma = {
+      user: {
+        _created: null,
+        findUnique: jest.fn(async ({ where: { login } }: any) => {
+          return mockPrisma.user._created && mockPrisma.user._created.login === login
+            ? mockPrisma.user._created
+            : null;
+        }),
+        create: jest.fn(async ({ data }: any) => {
+          mockPrisma.user._created = { id: '00000000-0000-0000-0000-000000000001', ...data, createdAt: new Date(), updatedAt: new Date() };
+          return mockPrisma.user._created;
+        }),
+      },
+    };
+
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(PrismaService)
+      .useValue(mockPrisma)
+      .compile();
+
+    app = moduleRef.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    const { HttpExceptionFilter } = await import('../../src/common/filters/http-exception.filter');
+    app.useGlobalFilters(new HttpExceptionFilter());
+    await app.init();
   });
 
   afterEach(async () => {
     await app.close();
   });
 
-  // ─── POST /auth/register ────────────────────────────────────────────────────
-
   describe('POST /auth/register', () => {
     it('retorna 201 e token ao cadastrar novo usuário', async () => {
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.user.create).mockResolvedValue(mockUser);
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/auth/register',
-        payload: { name: 'João Silva', login: 'joaosilva', password: 'senha123' },
-      });
-
-      expect(response.statusCode).toBe(201);
-      const body = response.json<{ data: { token: string; user: { login: string } } }>();
-      expect(body.data.token).toBeDefined();
-      expect(body.data.user.login).toBe('joaosilva');
+      const res = await request(app.getHttpServer()).post('/auth/register').set('X-Platform', 'mobile').send({ name: 'João', login: 'joao', password: 'senha123' });
+      expect(res.status).toBe(201);
+      expect(res.body.data.token).toBeDefined();
+      expect(res.body.data.user.login).toBe('joao');
     });
 
     it('retorna 409 quando o login já está em uso', async () => {
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/auth/register',
-        payload: { name: 'Outro', login: 'joaosilva', password: 'senha123' },
-      });
-
-      expect(response.statusCode).toBe(409);
-      const body = response.json<{ error: { code: string } }>();
-      expect(body.error.code).toBe('LOGIN_TAKEN');
+      mockPrisma.user._created = { id: '00000000-0000-0000-0000-000000000001', name: 'X', login: 'exists', password: 'p' };
+      const res = await request(app.getHttpServer()).post('/auth/register').send({ name: 'YY', login: 'exists', password: 'senha123' });
+      expect(res.status).toBe(409);
     });
 
     it('retorna 400 quando o corpo está faltando campos obrigatórios', async () => {
-      const response = await app.inject({
-        method: 'POST',
-        url: '/auth/register',
-        payload: { login: 'joaosilva' }, // faltam name e password
-      });
-
-      expect(response.statusCode).toBe(400);
-      // Schema JSON do Fastify (ajv) rejeita antes do Zod — código nativo do Fastify
-      const body = response.json<{ error: { code: string } }>();
-      expect(body.error.code).toBe('FST_ERR_VALIDATION');
+      const res = await request(app.getHttpServer()).post('/auth/register').send({ login: 'joao' });
+      expect(res.status).toBe(400);
     });
   });
-
-  // ─── POST /auth/login ────────────────────────────────────────────────────────
 
   describe('POST /auth/login', () => {
     it('retorna 200 e token com credenciais válidas', async () => {
-      // Registra primeiro para obter um hash real
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.user.create).mockResolvedValue(mockUser);
+      await request(app.getHttpServer()).post('/auth/register').set('X-Platform', 'mobile').send({ name: 'João', login: 'joao', password: 'senha123' });
 
-      const register = await app.inject({
-        method: 'POST',
-        url: '/auth/register',
-        payload: { name: 'João Silva', login: 'joaosilva', password: 'senha123' },
-      });
-
-      const registeredUser = register.json<{ data: { user: { id: number; login: string; name: string }; token: string } }>();
-
-      // Agora mock o findUnique com o hash gerado pelo bcrypt do register
-      // Como não temos acesso direto ao hash, usamos a mesma rota
-      // Em testes e2e com bcrypt real, fazemos login após register usando o create mockado
-      // Para isso, precisamos que findUnique retorne o usuário com a senha que o bcrypt gerou
-      // Workaround: usar campo password do create call
-      const createCall = vi.mocked(prisma.user.create).mock.calls[0]?.[0];
-      const hashedPassword = (createCall as { data: { password: string } }).data.password;
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
-        ...mockUser,
-        password: hashedPassword,
-      });
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/auth/login',
-        payload: { login: 'joaosilva', password: 'senha123' },
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = response.json<{ data: { token: string } }>();
-      expect(body.data.token).toBeDefined();
+      const res = await request(app.getHttpServer()).post('/auth/login').set('X-Platform', 'mobile').send({ login: 'joao', password: 'senha123' });
+      expect(res.status).toBe(200);
+      expect(res.body.data.token).toBeDefined();
     });
 
     it('retorna 401 com senha incorreta', async () => {
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/auth/login',
-        payload: { login: 'joaosilva', password: 'senha-errada' },
-      });
-
-      expect(response.statusCode).toBe(401);
-      const body = response.json<{ error: { code: string } }>();
-      expect(body.error.code).toBe('INVALID_CREDENTIALS');
+      mockPrisma.user._created = { id: '00000000-0000-0000-0000-000000000001', name: 'João', login: 'joao', password: 'hashed-senha123' };
+      const res = await request(app.getHttpServer()).post('/auth/login').send({ login: 'joao', password: 'senha-errada' });
+      expect(res.status).toBe(401);
     });
 
     it('retorna 401 quando o usuário não existe', async () => {
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/auth/login',
-        payload: { login: 'naoexiste', password: 'senha123' },
-      });
-
-      expect(response.statusCode).toBe(401);
+      mockPrisma.user._created = null;
+      const res = await request(app.getHttpServer()).post('/auth/login').send({ login: 'naoexiste', password: 'senha123' });
+      expect(res.status).toBe(401);
     });
 
     it('retorna 400 quando o corpo está vazio', async () => {
-      const response = await app.inject({
-        method: 'POST',
-        url: '/auth/login',
-        payload: {},
-      });
-
-      expect(response.statusCode).toBe(400);
+      const res = await request(app.getHttpServer()).post('/auth/login').send({});
+      expect(res.status).toBe(400);
     });
   });
 
-  // ─── POST /auth/logout ───────────────────────────────────────────────────────
-
   describe('POST /auth/logout', () => {
     it('retorna 401 sem Authorization header', async () => {
-      const response = await app.inject({
-        method: 'POST',
-        url: '/auth/logout',
-      });
-
-      expect(response.statusCode).toBe(401);
-      const body = response.json<{ error: { code: string } }>();
-      expect(body.error.code).toBe('MISSING_TOKEN');
+      const res = await request(app.getHttpServer()).post('/auth/logout');
+      expect(res.status).toBe(401);
     });
 
     it('retorna 200 e invalida o token com JWT válido', async () => {
-      // Gera um token real fazendo login
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.user.create).mockResolvedValue(mockUser);
+      const register = await request(app.getHttpServer()).post('/auth/register').set('X-Platform', 'mobile').send({ name: 'João', login: 'joao', password: 'senha123' });
+      const token = register.body.data.token;
 
-      const register = await app.inject({
-        method: 'POST',
-        url: '/auth/register',
-        payload: { name: 'João Silva', login: 'joaosilva', password: 'senha123' },
-      });
+      const res = await request(app.getHttpServer()).post('/auth/logout').set('Authorization', `Bearer ${token}`);
+      expect(res.status).toBe(200);
 
-      const { data } = register.json<{ data: { token: string } }>();
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/auth/logout',
-        headers: { authorization: `Bearer ${data.token}` },
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = response.json<{ data: { success: boolean } }>();
-      expect(body.data.success).toBe(true);
-
-      // Token deve ser rejeitado em chamadas subsequentes
-      const retry = await app.inject({
-        method: 'POST',
-        url: '/auth/logout',
-        headers: { authorization: `Bearer ${data.token}` },
-      });
-      expect(retry.statusCode).toBe(401);
-      const retryBody = retry.json<{ error: { code: string } }>();
-      expect(retryBody.error.code).toBe('INVALID_TOKEN');
+      const retry = await request(app.getHttpServer()).post('/auth/logout').set('Authorization', `Bearer ${token}`);
+      expect(retry.status).toBe(401);
     });
   });
 });

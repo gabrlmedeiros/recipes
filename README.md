@@ -122,6 +122,11 @@ RabbitMQ is used for:
 
 * Unit tests (business logic)
 * Integration tests (API endpoints)
+* Run all tests across the repository (execute from project root):
+
+```bash
+npm run test:all
+```
 
 ---
 

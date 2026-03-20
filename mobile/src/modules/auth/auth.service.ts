@@ -1,21 +1,21 @@
 import { api } from '../../shared/services/api';
 
 export interface AuthUser {
-    id: number;
+    id: string;
     name: string;
     login: string;
 }
 
-export interface AuthResponse {
-    token: string;
-    user: AuthUser;
-}
-
 export const authService = {
-    async login(login: string, password: string): Promise<AuthResponse> {
-        const { data } = await api.post<{ data: AuthResponse }>('/auth/login', { login, password });
+    async login(login: string, password: string): Promise<{ token: string; user: AuthUser }> {
+        const { data } = await api.post<{ data: { token: string; user: AuthUser } }>('/auth/login', { login, password }, { headers: { 'X-Platform': 'mobile' } });
         return data.data;
     },
 
-    async register(name: string, login: string, password: string): Promise<AuthResponse> { const { data } = await api.post<{ data: AuthResponse }>('/auth/register', { name, login, password }); return data.data; }, async logout(): Promise<void> { await api.post('/auth/logout'); },
+    async register(name: string, login: string, password: string): Promise<{ token: string; user: AuthUser }> {
+        const { data } = await api.post<{ data: { token: string; user: AuthUser } }>('/auth/register', { name, login, password }, { headers: { 'X-Platform': 'mobile' } });
+        return data.data;
+    },
+
+    async logout(): Promise<void> { await api.post('/auth/logout'); },
 };
