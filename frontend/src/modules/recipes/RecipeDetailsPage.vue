@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { recipesService, type Recipe } from './';
+import { recipesPrint } from './services/recipes.service';
 import AppButton from '../../components/AppButton.vue';
 import AppHeader from '../../components/AppHeader.vue';
 import RecipeFormModal from './RecipeFormModal.vue';
@@ -14,6 +15,8 @@ const recipe = ref<Recipe | null>(null);
 const loading = ref(false);
 const errorMessage = ref<string | null>(null);
 const modalOpen = ref(false);
+const printing = ref(false);
+let pollingHandle: number | null = null;
 
 const ingredients = computed(() => {
   const v = recipe.value?.ingredients;
@@ -74,6 +77,58 @@ function openEdit() {
   modalOpen.value = true;
 }
 
+async function handlePrint() {
+  if (!recipe.value?.id) return;
+  try {
+    printing.value = true;
+    const { jobId } = await recipesPrint.print(recipe.value.id);
+    const base = import.meta.env.VITE_API_URL ?? '';
+    pollingHandle = window.setInterval(async () => {
+      try {
+        const statusResp = await recipesPrint.status(jobId);
+        if (statusResp.status === 'DONE') {
+          if (pollingHandle) {
+            clearInterval(pollingHandle);
+            pollingHandle = null;
+          }
+          printing.value = false;
+          try {
+            const url = `${base}/prints/${jobId}/download`;
+            const resp = await fetch(url);
+            const blob = await resp.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const w = window.open('about:blank');
+            if (w) {
+              const htmlStart = `<!doctype html><html><head><title>Imprimir</title><style>html,body{height:100%;margin:0}</style></head><body><embed src="${blobUrl}" type="application/pdf" width="100%" height="100%"></embed><script>window.onload=function(){setTimeout(function(){window.focus();window.print();},500);};`;
+              const htmlEnd = '</scr' + 'ipt></body></html>';
+              const html = htmlStart + htmlEnd;
+              w.document.open();
+              w.document.write(html);
+              w.document.close();
+            } else {
+              window.open(url, '_blank');
+            }
+          } catch (e) {
+            window.open(`${base}/prints/${jobId}/download`, '_blank');
+          }
+        } else if (statusResp.status === 'FAILED') {
+          if (pollingHandle) {
+            clearInterval(pollingHandle);
+            pollingHandle = null;
+          }
+          printing.value = false;
+          alert('Falha ao preparar impressão');
+        }
+      } catch (e) {
+        // ignore and retry
+      }
+    }, 1500);
+  } catch (err) {
+    printing.value = false;
+    alert('Falha ao enviar para impressão');
+  }
+}
+
 async function onSaved(saved: Recipe) {
   recipe.value = saved;
   modalOpen.value = false;
@@ -99,9 +154,10 @@ async function onSaved(saved: Recipe) {
       <article v-else-if="recipe" class="bg-bg-surface border border-border-primary rounded-xl p-6">
         <div class="flex items-center justify-between gap-4">
           <h2 class="text-2xl font-semibold text-text-primary">{{ recipe.name }}</h2>
-          <div class="flex-shrink-0">
-            <AppButton class="!py-1 !px-3 text-sm" variant="ghost" @click="openEdit">Editar</AppButton>
-          </div>
+            <div class="flex-shrink-0 flex items-center gap-2">
+              <AppButton class="!py-1 !px-3 text-sm" :disabled="printing" variant="ghost" @click="handlePrint">{{ printing ? 'Preparando...' : 'Imprimir' }}</AppButton>
+              <AppButton class="!py-1 !px-3 text-sm" variant="ghost" @click="openEdit">Editar</AppButton>
+            </div>
         </div>
 
         <div class="flex items-center gap-3 mt-3 text-sm text-text-secondary">

@@ -115,6 +115,47 @@ RabbitMQ is used for:
 
 ---
 
+## 🐰 Message Queue (RabbitMQ)
+
+We use RabbitMQ for the print queue and other background tasks. Key notes:
+
+- Queue name: `print_recipe` (worker and producer use this queue).
+- Connection string: set `RABBITMQ_URL` (examples below). The backend and worker read this env var.
+
+Quick start (Docker):
+
+```bash
+# start all services (includes RabbitMQ)
+docker compose up -d
+
+# rebuild API image if you changed backend code or Dockerfile
+docker compose build api
+docker compose up -d api
+```
+
+If you run services locally (no Docker), set `RABBITMQ_URL` in `backend/.env`:
+
+```
+RABBITMQ_URL=amqp://guest:guest@localhost:5672
+```
+
+Check RabbitMQ queues and consumers:
+
+```bash
+docker compose exec rabbitmq rabbitmqctl list_queues
+docker compose exec rabbitmq rabbitmqctl list_consumers
+```
+
+Notes on the worker:
+
+- In development the worker runs together with the API when using the `start:dev:with-queue` script (`npm run start:dev:with-queue`).
+- In production it's recommended to run the worker as a separate process/container (we provide `worker:prod`).
+- Print jobs lifecycle: `PENDING` → `PROCESSING` → `DONE` | `FAILED`. The generated PDF is stored on the API host and the `PrintJob` record stores the file path.
+
+If you want a lightweight test, enqueue a print job via the API endpoint `POST /recipes/:id/print` and watch the queue/worker process it.
+
+---
+
 ## 🧪 Testing
 
 * Unit tests (business logic)

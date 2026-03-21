@@ -18,7 +18,6 @@ export class AuthController {
     }
 
     const result = await this.registerUseCase.execute(body as any);
-    // set HttpOnly cookie with token
     const cookieOptions = {
       httpOnly: true,
       secure: process.env['NODE_ENV'] === 'production',

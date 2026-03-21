@@ -9,6 +9,7 @@ import { DeleteRecipeUseCase } from './application/use-cases/delete-recipe.use-c
 import { GetCategoriesUseCase } from './application/use-cases/get-categories.use-case';
 import { JwtAuthGuard } from '../auth/application/guards/jwt-auth.guard';
 import { SearchRecipesDto } from './application/dto/search-recipes.dto';
+import { CreatePrintJobUseCase } from './application/use-cases/create-print-job.use-case';
 
 @Controller('recipes')
 export class RecipesController {
@@ -19,6 +20,7 @@ export class RecipesController {
     private updateUseCase: UpdateRecipeUseCase,
     private deleteUseCase: DeleteRecipeUseCase,
     private categoriesUseCase: GetCategoriesUseCase,
+    private createPrintJobUseCase: CreatePrintJobUseCase,
   ) {}
 
   @Get()
@@ -86,5 +88,13 @@ export class RecipesController {
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     await this.deleteUseCase.execute(id);
     return { data: null, error: null };
+  }
+
+  @Post(':id/print')
+  @UseGuards(JwtAuthGuard, RecipeOwnerGuard)
+  async print(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
+    const userId = req.user?.id as string | undefined;
+    const job = await this.createPrintJobUseCase.execute(id, userId);
+    return { data: { jobId: job.id }, error: null };
   }
 }

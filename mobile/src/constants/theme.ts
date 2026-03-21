@@ -33,7 +33,6 @@ export const LightColors = {
 export const Colors = DarkColors;
 
 export const Fonts = {
-  // Use system UI font for better readability across platforms
   regular: 'System',
   semiBold: 'System',
   bold: 'System',

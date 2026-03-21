@@ -41,3 +41,23 @@ model Recipe {
   @@index([categoryId], map: "Recipe_categoryId_fkey")
   @@index([userId], map: "Recipe_userId_fkey")
 }
+
+enum PrintJobStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+model PrintJob {
+  id         String         @id @default(uuid())
+  recipeId   String
+  status     PrintJobStatus @default(PENDING)
+  filePath   String?
+  error      String?        @db.Text
+  requestedBy String?       
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([recipeId], map: "PrintJob_recipeId_idx")
+}

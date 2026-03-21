@@ -14,7 +14,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
       return response.status(status).json({ data: null, error: { message, code: 'HTTP_ERROR' } });
     }
 
-    // Generic
     console.error('Unhandled exception in NestJS:', exception);
     return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       data: null,

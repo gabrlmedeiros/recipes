@@ -9,6 +9,7 @@ import { CreateRecipeUseCase } from '../application/use-cases/create-recipe.use-
 import { UpdateRecipeUseCase } from '../application/use-cases/update-recipe.use-case';
 import { DeleteRecipeUseCase } from '../application/use-cases/delete-recipe.use-case';
 import { GetCategoriesUseCase } from '../application/use-cases/get-categories.use-case';
+import { CreatePrintJobUseCase } from '../application/use-cases/create-print-job.use-case';
 
 describe('RecipesController', () => {
   let controller: RecipesController;
@@ -46,6 +47,7 @@ describe('RecipesController', () => {
         { provide: UpdateRecipeUseCase, useValue: updateUseCase },
         { provide: DeleteRecipeUseCase, useValue: deleteUseCase },
         { provide: GetCategoriesUseCase, useValue: categoriesUseCase },
+        { provide: CreatePrintJobUseCase, useValue: { execute: jest.fn() } },
         { provide: RecipeOwnerGuard, useValue: { canActivate: jest.fn().mockReturnValue(true) } },
         { provide: JwtAuthGuard, useValue: { canActivate: jest.fn().mockReturnValue(true) } },
         { provide: PrismaService, useValue: {} },

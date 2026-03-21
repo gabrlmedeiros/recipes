@@ -88,4 +88,15 @@ export const recipesService = {
   },
 };
 
+
+export const recipesPrint = {
+  async print(id: string): Promise<{ jobId: string } > {
+    const { data } = await api.post<{ data: { jobId: string } }>(`/recipes/${id}/print`);
+    return data.data;
+  },
+  async status(jobId: string): Promise<{ status: string; filePath?: string | null }>{
+    const { data } = await api.get<{ data: { status: string; filePath?: string | null } }>(`/prints/${jobId}/status`);
+    return data.data;
+  },
+};
 export type { Recipe as RecipeType, Category as CategoryType, RecipeInput as RecipeInputType };

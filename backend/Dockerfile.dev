@@ -1,19 +1,43 @@
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
-RUN apk add --no-cache openssl
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		ca-certificates \
+		fonts-liberation \
+		libnss3 \
+		libxss1 \
+		libasound2 \
+		libatk1.0-0 \
+		libatk-bridge2.0-0 \
+		libcups2 \
+		libxcomposite1 \
+		libxdamage1 \
+		libxrandr2 \
+		libgbm1 \
+		libgtk-3-0 \
+		chromium \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& set -eux; \
+		if command -v chromium-browser >/dev/null 2>&1; then CANDIDATE="$(command -v chromium-browser)"; \
+		elif command -v chromium >/dev/null 2>&1; then CANDIDATE="$(command -v chromium)"; \
+		elif command -v chromium-stable >/dev/null 2>&1; then CANDIDATE="$(command -v chromium-stable)"; \
+		elif command -v google-chrome-stable >/dev/null 2>&1; then CANDIDATE="$(command -v google-chrome-stable)"; \
+		else CANDIDATE=""; fi; \
+		if [ -n "$CANDIDATE" ]; then if [ "$(readlink -f /usr/bin/chromium 2>/dev/null || true)" != "$(readlink -f "$CANDIDATE")" ]; then ln -sf "$CANDIDATE" /usr/bin/chromium; fi; else echo "No chromium binary found"; fi
 
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 COPY package*.json ./
-RUN npm ci
+RUN npm install --no-audit --no-fund
 
 COPY tsconfig.json ./
 COPY prisma ./prisma
 COPY src ./src
 
 RUN npx prisma generate
-RUN node prisma/seed.js || true
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node prisma/seed.js || true && npm run start:dev"]
+CMD ["sh", "-c", "echo 'Waiting for database and applying schema...' && until npx prisma db push --accept-data-loss; do echo 'prisma db push failed, retrying in 2s...'; sleep 2; done && echo 'Running seed...' && node prisma/seed.js && echo 'Starting app and worker' && npm run start:dev:with-queue"]

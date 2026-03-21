@@ -10,10 +10,13 @@ import { CreateRecipeUseCase } from './application/use-cases/create-recipe.use-c
 import { UpdateRecipeUseCase } from './application/use-cases/update-recipe.use-case';
 import { DeleteRecipeUseCase } from './application/use-cases/delete-recipe.use-case';
 import { GetCategoriesUseCase } from './application/use-cases/get-categories.use-case';
+import { RabbitMQService } from '../../infrastructure/queue/rabbitmq.service';
+import { PrintsController } from './prints.controller';
+import { CreatePrintJobUseCase } from './application/use-cases/create-print-job.use-case';
 
 @Module({
   imports: [PrismaModule],
-  controllers: [RecipesController],
+  controllers: [RecipesController, PrintsController],
   providers: [
     // repository binding
     { provide: RECIPES_REPOSITORY, useClass: PrismaRecipesRepository },
@@ -24,6 +27,9 @@ import { GetCategoriesUseCase } from './application/use-cases/get-categories.use
     UpdateRecipeUseCase,
     DeleteRecipeUseCase,
     GetCategoriesUseCase,
+    CreatePrintJobUseCase,
+    // queue service
+    RabbitMQService,
     // guards
     RecipeOwnerGuard,
   ],
