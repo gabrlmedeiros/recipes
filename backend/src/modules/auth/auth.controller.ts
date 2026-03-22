@@ -1,4 +1,5 @@
 import { Body, Controller, Post, Req, UseGuards, HttpCode, BadRequestException, Res } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from './application/guards/jwt-auth.guard';
 import { tokenBlacklist } from './token-blacklist';
 import { Response } from 'express';
@@ -7,11 +8,15 @@ import { LoginDto } from './application/dto/login.dto';
 import { RegisterUseCase } from './application/use-cases/register.use-case';
 import { LoginUseCase } from './application/use-cases/login.use-case';
 
+@ApiTags('Autenticação')
 @Controller('auth')
 export class AuthController {
   constructor(private registerUseCase: RegisterUseCase, private loginUseCase: LoginUseCase) {}
 
   @Post('register')
+  @ApiOperation({ summary: 'Registrar novo usuário' })
+  @ApiResponse({ status: 201, description: 'Usuário registrado com sucesso' })
+  @ApiResponse({ status: 400, description: 'Requisição inválida' })
   async register(@Body() body: RegisterDto, @Req() req: any, @Res({ passthrough: true }) res: Response) {
     if (!body || !body.login || !body.password) {
       throw new BadRequestException({ message: 'Corpo inválido ou ausente' });
@@ -34,6 +39,9 @@ export class AuthController {
 
   @HttpCode(200)
   @Post('login')
+  @ApiOperation({ summary: 'Autenticar usuário e obter token' })
+  @ApiResponse({ status: 200, description: 'Autenticado com sucesso' })
+  @ApiResponse({ status: 401, description: 'Credenciais inválidas' })
   async login(@Body() body: LoginDto, @Req() req: any, @Res({ passthrough: true }) res: Response) {
     if (!body || !body.login || !body.password) {
       throw new BadRequestException({ message: 'Corpo inválido ou ausente' });
@@ -56,6 +64,9 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   @Post('logout')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Encerrar sessão do usuário (logout)' })
+  @ApiResponse({ status: 200, description: 'Logout efetuado com sucesso' })
   async logout(@Req() req: any, @Res({ passthrough: true }) res: Response) {
     const token = req.cookies?.token as string | undefined ?? req.user?.token;
     if (token) tokenBlacklist.add(token);

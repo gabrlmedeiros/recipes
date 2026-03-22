@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query, UseGuards, Request, HttpException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { CreateRecipeInput } from './application/dto/create-recipe.dto';
 import { RecipeOwnerGuard } from './application/guards/recipe-owner.guard';
 import { ListRecipesUseCase } from './application/use-cases/list-recipes.use-case';
@@ -11,6 +12,7 @@ import { JwtAuthGuard } from '../auth/application/guards/jwt-auth.guard';
 import { SearchRecipesDto } from './application/dto/search-recipes.dto';
 import { CreatePrintJobUseCase } from './application/use-cases/create-print-job.use-case';
 
+@ApiTags('Receitas')
 @Controller('recipes')
 export class RecipesController {
   constructor(
@@ -25,6 +27,9 @@ export class RecipesController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Listar receitas do usuário com filtros' })
+  @ApiResponse({ status: 200, description: 'Lista de receitas retornada' })
   async list(@Request() req: any, @Query() query: SearchRecipesDto) {
     const p = Number(query.page ?? 1) || 1;
     const l = Number(query.limit ?? 20) || 20;
@@ -56,6 +61,8 @@ export class RecipesController {
   }
 
   @Get('categories')
+  @ApiOperation({ summary: 'Listar categorias disponíveis' })
+  @ApiResponse({ status: 200, description: 'Categorias retornadas' })
   async categories() {
     const cats = await this.categoriesUseCase.execute();
     return { data: cats, error: null };
@@ -63,6 +70,9 @@ export class RecipesController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RecipeOwnerGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Obter uma receita pelo ID' })
+  @ApiResponse({ status: 200, description: 'Receita retornada' })
   async get(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     const recipe = req.recipe ?? (await this.getUseCase.execute(id));
     return { data: recipe ?? null, error: null };
@@ -70,6 +80,9 @@ export class RecipesController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Criar uma nova receita' })
+  @ApiResponse({ status: 201, description: 'Receita criada com sucesso' })
   async create(@Request() req: any, @Body() body: CreateRecipeInput) {
     const userId = req.user?.id as string;
     const recipe = await this.createUseCase.execute(body, userId);
@@ -78,6 +91,9 @@ export class RecipesController {
 
   @Put(':id')
   @UseGuards(JwtAuthGuard, RecipeOwnerGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Atualizar uma receita existente' })
+  @ApiResponse({ status: 200, description: 'Receita atualizada' })
   async update(@Param('id', ParseUUIDPipe) id: string, @Body() body: Partial<CreateRecipeInput>) {
     const recipe = await this.updateUseCase.execute(id, body);
     return { data: recipe, error: null };
@@ -85,6 +101,9 @@ export class RecipesController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RecipeOwnerGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Remover uma receita' })
+  @ApiResponse({ status: 200, description: 'Receita removida' })
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     await this.deleteUseCase.execute(id);
     return { data: null, error: null };
@@ -92,6 +111,9 @@ export class RecipesController {
 
   @Post(':id/print')
   @UseGuards(JwtAuthGuard, RecipeOwnerGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Imprimir/gerar trabalho de impressão para a receita' })
+  @ApiResponse({ status: 201, description: 'Trabalho de impressão criado' })
   async print(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     const userId = req.user?.id as string | undefined;
     const job = await this.createPrintJobUseCase.execute(id, userId);

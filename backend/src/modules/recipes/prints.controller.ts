@@ -1,14 +1,18 @@
 import { Controller, Get, Param, ParseUUIDPipe, Res, NotFoundException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { Response } from 'express';
 import path from 'path';
 import fs from 'fs/promises';
 
+@ApiTags('Impressões')
 @Controller('prints')
 export class PrintsController {
   constructor(private prisma: PrismaService) {}
 
   @Get(':id/status')
+  @ApiOperation({ summary: 'Obter status de um trabalho de impressão' })
+  @ApiResponse({ status: 200, description: 'Status do trabalho de impressão' })
   async status(@Param('id', ParseUUIDPipe) id: string) {
     const job = await this.prisma.printJob.findUnique({ where: { id } });
     if (!job) throw new NotFoundException();
@@ -16,6 +20,8 @@ export class PrintsController {
   }
 
   @Get(':id/download')
+  @ApiOperation({ summary: 'Baixar arquivo de impressão (se disponível)' })
+  @ApiResponse({ status: 200, description: 'Arquivo retornado' })
   async download(@Param('id', ParseUUIDPipe) id: string, @Res() res: Response) {
     const job = await this.prisma.printJob.findUnique({ where: { id } });
     if (!job) throw new NotFoundException();
