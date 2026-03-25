@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from '../hooks/use-theme';
-import { Fonts } from '../constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { Fonts } from '@/constants/theme';
 
 type Recipe = any;
 

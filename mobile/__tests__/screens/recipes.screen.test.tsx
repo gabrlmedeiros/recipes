@@ -2,9 +2,9 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import RecipesScreen from '../../app/(tabs)/index';
-import { recipesService } from '../../src/modules/recipes/recipes.service';
-import { authService } from '../../src/modules/auth/auth.service';
+import RecipesScreen from '../../src/modules/recipes/screens/RecipesListScreen';
+import { recipesService } from '../../src/modules/recipes/services/recipes.service';
+import { authService } from '../../src/modules/auth/services/auth.service';
 import { storage } from '../../src/shared/storage/storage';
 
 const mockReplace = jest.fn();
@@ -30,14 +30,14 @@ jest.mock('expo-router', () => {
   };
 });
 
-jest.mock('../../src/modules/recipes/recipes.service', () => ({
+jest.mock('../../src/modules/recipes/services/recipes.service', () => ({
   recipesService: {
     list: jest.fn(),
     getCategories: jest.fn(),
   },
 }));
 
-jest.mock('../../src/modules/auth/auth.service', () => ({
+jest.mock('../../src/modules/auth/services/auth.service', () => ({
   authService: {
     logout: jest.fn(),
   },

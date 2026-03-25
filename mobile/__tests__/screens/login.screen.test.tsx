@@ -2,7 +2,7 @@ import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import LoginScreen from '../../app/(auth)/login';
-import { authService } from '../../src/modules/auth/auth.service';
+import { authService } from '../../src/modules/auth/services/auth.service';
 import { storage } from '../../src/shared/storage/storage';
 
 const mockReplace = jest.fn();
@@ -12,7 +12,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: mockReplace, push: mockPush }),
 }));
 
-jest.mock('../../src/modules/auth/auth.service', () => ({
+jest.mock('../../src/modules/auth/services/auth.service', () => ({
   authService: {
     login: jest.fn(),
   },

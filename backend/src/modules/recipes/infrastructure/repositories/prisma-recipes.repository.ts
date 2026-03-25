@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../infrastructure/prisma/prisma.service';
 import { RecipesRepository, Paginated, CreateRecipeData } from '../../domain/repositories/recipes.repository';
 import { Recipe } from '../../domain/entities/recipe.entity';
@@ -69,9 +69,6 @@ export class PrismaRecipesRepository implements RecipesRepository {
   }
 
   async create(input: CreateRecipeData): Promise<Recipe> {
-    if (!input || !input.name) {
-      throw new HttpException({ message: 'O nome da receita é obrigatório', code: 'BAD_REQUEST' }, HttpStatus.BAD_REQUEST);
-    }
     const r = await this.prisma.recipe.create({
       data: {
         userId: input.userId,

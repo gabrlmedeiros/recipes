@@ -1,6 +1,6 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { recipesService } from '../../src/modules/recipes/recipes.service';
-import { api } from '../../src/shared/services/api';
+import { recipesService } from '../../src/modules/recipes/services/recipes.service';
+import { api } from '@/shared/services/api';
 
 jest.mock('../../src/shared/services/api', () => ({
   api: {

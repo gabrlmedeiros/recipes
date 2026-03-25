@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, BadRequestException } from '@nestjs/common';
 import { RecipesRepository, RECIPES_REPOSITORY } from '../../domain/repositories/recipes.repository';
 import { CreateRecipeInput } from '../dto/create-recipe.dto';
 
@@ -6,6 +6,9 @@ export class CreateRecipeUseCase {
   constructor(@Inject(RECIPES_REPOSITORY) private repo: RecipesRepository) {}
 
   async execute(input: CreateRecipeInput, userId: string) {
+    if (!input || !input.name) {
+      throw new BadRequestException({ message: 'O nome da receita é obrigatório', code: 'BAD_REQUEST' });
+    }
     const data = {
       userId,
       categoryId: input.categoryId,

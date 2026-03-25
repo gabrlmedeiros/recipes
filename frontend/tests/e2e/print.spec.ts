@@ -33,8 +33,8 @@ test('Fluxo de impressão da receita (simulado)', async ({ page }) => {
     });
   });
 
-  // Intercepta POST /recipes/:id/print e retorna jobId
-  await page.route(`**/recipes/${recipeId}/print`, async (route) => {
+  // Intercepta POST /prints/:id e retorna jobId
+  await page.route(`**/prints/${recipeId}`, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -71,7 +71,7 @@ test('Fluxo de impressão da receita (simulado)', async ({ page }) => {
   await page.getByText('Imprimir').waitFor({ state: 'visible', timeout: 5000 });
 
   // Prepare to capture POST and download requests
-  const postPromise = page.waitForRequest(`**/recipes/${recipeId}/print`);
+  const postPromise = page.waitForRequest(`**/prints/${recipeId}`);
   const downloadPromise = page.waitForRequest(`**/prints/${jobId}/download`);
 
   // Clicar no botão 'Imprimir'

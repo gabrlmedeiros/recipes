@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { recipesService } from '../../src/modules/recipes/recipes.service';
+import { recipesService } from '../../src/modules/recipes/services/recipes.service';
 import RecipeFormScreen from '../../app/(recipes)/recipe-form';
 
 const mockBack = jest.fn();
@@ -33,7 +33,7 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-jest.mock('../../src/modules/recipes/recipes.service', () => ({
+jest.mock('../../src/modules/recipes/services/recipes.service', () => ({
   recipesService: {
     getCategories: jest.fn(),
     create: jest.fn(),

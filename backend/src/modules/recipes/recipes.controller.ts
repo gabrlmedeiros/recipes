@@ -10,7 +10,6 @@ import { DeleteRecipeUseCase } from './application/use-cases/delete-recipe.use-c
 import { GetCategoriesUseCase } from './application/use-cases/get-categories.use-case';
 import { JwtAuthGuard } from '../auth/application/guards/jwt-auth.guard';
 import { SearchRecipesDto } from './application/dto/search-recipes.dto';
-import { CreatePrintJobUseCase } from './application/use-cases/create-print-job.use-case';
 
 @ApiTags('Receitas')
 @Controller('recipes')
@@ -22,7 +21,6 @@ export class RecipesController {
     private updateUseCase: UpdateRecipeUseCase,
     private deleteUseCase: DeleteRecipeUseCase,
     private categoriesUseCase: GetCategoriesUseCase,
-    private createPrintJobUseCase: CreatePrintJobUseCase,
   ) {}
 
   @Get()
@@ -109,14 +107,4 @@ export class RecipesController {
     return { data: null, error: null };
   }
 
-  @Post(':id/print')
-  @UseGuards(JwtAuthGuard, RecipeOwnerGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Imprimir/gerar trabalho de impressão para a receita' })
-  @ApiResponse({ status: 201, description: 'Trabalho de impressão criado' })
-  async print(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
-    const userId = req.user?.id as string | undefined;
-    const job = await this.createPrintJobUseCase.execute(id, userId);
-    return { data: { jobId: job.id }, error: null };
-  }
 }

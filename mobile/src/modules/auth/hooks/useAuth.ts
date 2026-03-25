@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { authService, type AuthUser } from '@/modules/auth/auth.service';
+import { authService, type AuthUser } from '../services/auth.service';
 import { storage } from '@/shared/storage/storage';
 
 export function useAuth() {

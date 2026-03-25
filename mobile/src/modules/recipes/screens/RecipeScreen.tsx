@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Pressable } from
 import { useLocalSearchParams, useRouter, useNavigation, useFocusEffect } from 'expo-router';
 import { api } from '@/shared/services/api';
 import { useTheme } from '@/hooks/use-theme';
-import RecipeView from '@/components/RecipeView';
+import RecipeView from '../components/RecipeView';
 
 export default function RecipeScreen() {
   const { id } = useLocalSearchParams() as { id?: string };

@@ -12,7 +12,7 @@ import {
 import { useRouter, useLocalSearchParams, useNavigation } from 'expo-router';
 import { AppInput } from '@/components/ui/AppInput';
 import { AppButton } from '@/components/ui/AppButton';
-import { type Category, type RecipeInput, type Recipe } from '@/modules/recipes/recipes.service';
+import { type Category, type RecipeInput, type Recipe } from '../services/recipes.service';
 import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useRecipes } from '@/modules/recipes';

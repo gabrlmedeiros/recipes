@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { recipesService, type Recipe, type RecipeInput, type PaginatedRecipes } from '@/modules/recipes/recipes.service';
+import { recipesService, type Recipe, type RecipeInput, type PaginatedRecipes } from '../services/recipes.service';
 
 export function useRecipes() {
   const [items, setItems] = useState<Recipe[]>([]);

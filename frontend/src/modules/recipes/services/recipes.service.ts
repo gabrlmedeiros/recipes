@@ -91,7 +91,7 @@ export const recipesService = {
 
 export const recipesPrint = {
   async print(id: string): Promise<{ jobId: string } > {
-    const { data } = await api.post<{ data: { jobId: string } }>(`/recipes/${id}/print`);
+    const { data } = await api.post<{ data: { jobId: string } }>(`/prints/${id}`);
     return data.data;
   },
   async status(jobId: string): Promise<{ status: string; filePath?: string | null }>{

@@ -1,6 +1,6 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { authService } from '../../src/modules/auth/auth.service';
-import { api } from '../../src/shared/services/api';
+import { api } from '@/shared/services/api';
+import { authService } from '@/modules/auth';
 
 jest.mock('../../src/shared/services/api', () => ({
   api: {
